@@ -37,8 +37,8 @@ jobs:
         id: monitor
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          ALERT_EMAIL_1: ${{ vars.ALERT_EMAIL_1 }}
-          ALERT_EMAIL_2: ${{ vars.ALERT_EMAIL_2 }}
+          ALERT_EMAIL_1: ${{ secrets.ALERT_EMAIL_1 }}
+          ALERT_EMAIL_2: ${{ secrets.ALERT_EMAIL_2 }}
           RESEND_FROM: ${{ vars.RESEND_FROM }}
           MONITOR_DATES: "2026-08-05,2026-08-06"
         run: npm run check

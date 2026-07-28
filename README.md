@@ -17,8 +17,8 @@ El repositorio utiliza estos valores:
 | Tipo | Nombre | Valor |
 | --- | --- | --- |
 | Secret | `RESEND_API_KEY` | Clave real `re_...` de Resend |
-| Variable | `ALERT_EMAIL_1` | Primer destinatario |
-| Variable | `ALERT_EMAIL_2` | Segundo destinatario |
+| Secret | `ALERT_EMAIL_1` | Primer destinatario |
+| Secret | `ALERT_EMAIL_2` | Segundo destinatario |
 | Variable | `RESEND_FROM` | `Monitor ALSA <alertas@mycv.es>` |
 | Variable | `MONITOR_ENABLED` | `false` durante la preparación; `true` para activar |
 
