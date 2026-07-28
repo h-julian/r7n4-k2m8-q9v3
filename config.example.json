@@ -1,0 +1,15 @@
+{
+  "dates": [
+    "2026-08-05",
+    "2026-08-06"
+  ],
+  "browserPath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "resend": {
+    "apiKey": "re_CAMBIAR",
+    "from": "Monitor ALSA <alertas@mycv.es>",
+    "to": [
+      "primer-correo@example.com",
+      "segundo-correo@example.com"
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "alsa-seat-monitor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Monitor local de plazas ALSA para Jerez de la Frontera - Zamora",
+  "scripts": {
+    "check": "node alsa-monitor.mjs",
+    "dry-run": "node alsa-monitor.mjs --dry-run",
+    "test-email": "node alsa-monitor.mjs --test-email"
+  },
+  "dependencies": {
+    "playwright-core": "^1.54.1"
+  }
+}

@@ -1,0 +1,5 @@
+node_modules/
+config.json
+.alsa-monitor-state.json
+alsa-monitor.log
+npm-debug.log*
