@@ -6,7 +6,9 @@ import { chromium } from "playwright-core";
 
 const PROJECT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const CONFIG_PATH = path.join(PROJECT_DIR, "config.json");
-const STATE_PATH = path.join(PROJECT_DIR, ".alsa-monitor-state.json");
+const STATE_PATH = process.env.MONITOR_STATE_PATH
+  ? path.resolve(PROJECT_DIR, process.env.MONITOR_STATE_PATH)
+  : path.join(PROJECT_DIR, ".alsa-monitor-state.json");
 const LOG_PATH = path.join(PROJECT_DIR, "alsa-monitor.log");
 const ALSA_HOME = "https://www.alsa.com/en";
 const ORIGIN_ID = "2374";
@@ -38,8 +40,6 @@ function applyEnvironment(config) {
       ? process.env.MONITOR_DATES.split(",").map((value) => value.trim())
       : config.dates,
     browserPath: process.env.CHROME_PATH || config.browserPath,
-    lastAlertFingerprint:
-      process.env.LAST_ALERT_FINGERPRINT || config.lastAlertFingerprint || null,
     resend: {
       ...config.resend,
       apiKey: process.env.RESEND_API_KEY || config.resend?.apiKey,
@@ -368,16 +368,17 @@ async function runMonitor(config, { dryRun = false } = {}) {
         await log(`Sin plazas para ${isoDate}.`);
       }
 
-      state.dates[isoDate] = {
-        available: isConfirmed,
-        fingerprint: isConfirmed ? confirmedFingerprint : "",
-        checkedAt: new Date().toISOString(),
-      };
+      if (!process.env.GITHUB_ACTIONS) {
+        state.dates[isoDate] = {
+          available: isConfirmed,
+          fingerprint: isConfirmed ? confirmedFingerprint : "",
+          checkedAt: new Date().toISOString(),
+        };
+      }
     }
 
     const currentFingerprint = fingerprintResults(availableResults);
-    const previousFingerprint =
-      config.lastAlertFingerprint || state.lastAlertFingerprint || "NONE";
+    const previousFingerprint = state.lastAlertFingerprint || "NONE";
 
     if (
       availableResults.length > 0 &&

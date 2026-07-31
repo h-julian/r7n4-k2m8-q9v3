@@ -22,7 +22,9 @@ El repositorio utiliza estos valores:
 | Secret | `ALERT_EMAIL_2` | Segundo destinatario |
 | Variable | `RESEND_FROM` | `Monitor ALSA <alertas@mycv.es>` |
 | Variable | `MONITOR_ENABLED` | `false` durante la preparación; `true` para activar |
-| Variable | `LAST_ALERT_FINGERPRINT` | Memoria automática del último aviso |
+
+La memoria del último aviso se guarda en `.github/alsa-monitor-state.json`.
+Solo contiene una huella técnica y se actualiza cuando cambia la disponibilidad.
 
 Antes de activar, `mycv.es` debe aparecer como dominio verificado en Resend y
 la dirección indicada en `RESEND_FROM` debe pertenecer a ese dominio.
