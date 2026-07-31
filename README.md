@@ -5,9 +5,10 @@ para el 5 y el 6 de agosto de 2026. Si aparece una plaza:
 
 1. vuelve a comprobarla para evitar falsos positivos;
 2. envía una única alerta mediante Resend a dos destinatarios;
-3. desactiva automáticamente el workflow.
+3. guarda la disponibilidad avisada para no repetir el mismo correo.
 
-También se desactiva cuando las fechas ya han pasado. No compra ni reserva.
+El workflow sigue activo para detectar horarios nuevos o plazas que reaparezcan,
+y solo se desactiva cuando las fechas ya han pasado. No compra ni reserva.
 Funciona en GitHub Actions aunque el ordenador personal esté apagado.
 
 ## Configuración en GitHub
@@ -21,6 +22,7 @@ El repositorio utiliza estos valores:
 | Secret | `ALERT_EMAIL_2` | Segundo destinatario |
 | Variable | `RESEND_FROM` | `Monitor ALSA <alertas@mycv.es>` |
 | Variable | `MONITOR_ENABLED` | `false` durante la preparación; `true` para activar |
+| Variable | `LAST_ALERT_FINGERPRINT` | Memoria automática del último aviso |
 
 Antes de activar, `mycv.es` debe aparecer como dominio verificado en Resend y
 la dirección indicada en `RESEND_FROM` debe pertenecer a ese dominio.

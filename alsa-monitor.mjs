@@ -38,6 +38,8 @@ function applyEnvironment(config) {
       ? process.env.MONITOR_DATES.split(",").map((value) => value.trim())
       : config.dates,
     browserPath: process.env.CHROME_PATH || config.browserPath,
+    lastAlertFingerprint:
+      process.env.LAST_ALERT_FINGERPRINT || config.lastAlertFingerprint || null,
     resend: {
       ...config.resend,
       apiKey: process.env.RESEND_API_KEY || config.resend?.apiKey,
@@ -221,6 +223,24 @@ function fingerprint(journeys) {
     .join("|");
 }
 
+function fingerprintResults(results) {
+  if (results.length === 0) return "NONE";
+  return createHash("sha256")
+    .update(
+      JSON.stringify(
+        results.map((result) => ({
+          date: result.date,
+          available: result.available.map((journey) => ({
+            departure: journey.departure,
+            arrival: journey.arrival,
+            details: journey.details,
+          })),
+        })),
+      ),
+    )
+    .digest("hex");
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -272,12 +292,7 @@ async function sendAvailabilityEmail(config, results) {
         `<p><a href="${escapeHtml(result.searchUrl)}">Abrir esta búsqueda en ALSA</a></p>`,
     );
   }
-  const hash = createHash("sha256")
-    .update(JSON.stringify(results.map((result) => ({
-      date: result.date,
-      available: result.available,
-    }))))
-    .digest("hex");
+  const hash = fingerprintResults(results);
   await sendWithResend(
     config,
     {
@@ -328,7 +343,7 @@ async function runMonitor(config, { dryRun = false } = {}) {
   try {
     const page = await browser.newPage({ locale: "en-US" });
     const action = await getSearchAction(page);
-    const alerts = [];
+    const availableResults = [];
 
     for (const isoDate of activeDates) {
       const result = await checkDate(page, action, isoDate);
@@ -344,18 +359,11 @@ async function runMonitor(config, { dryRun = false } = {}) {
       const isConfirmed =
         confirmed.available.length > 0 &&
         confirmedFingerprint === firstFingerprint;
-      const previous = state.dates[isoDate] ?? {
-        available: false,
-        fingerprint: "",
-      };
-
-      if (
-        isConfirmed &&
-        (!previous.available || previous.fingerprint !== confirmedFingerprint)
-      ) {
-        alerts.push(confirmed);
-      } else if (isConfirmed) {
-        await log(`Plaza ya notificada para ${isoDate}; no se repite el correo.`);
+      if (isConfirmed) {
+        availableResults.push(confirmed);
+        await log(
+          `Hay ${confirmed.available.length} servicio(s) disponible(s) para ${isoDate}.`,
+        );
       } else {
         await log(`Sin plazas para ${isoDate}.`);
       }
@@ -367,18 +375,33 @@ async function runMonitor(config, { dryRun = false } = {}) {
       };
     }
 
-    if (alerts.length > 0 && dryRun) {
+    const currentFingerprint = fingerprintResults(availableResults);
+    const previousFingerprint =
+      config.lastAlertFingerprint || state.lastAlertFingerprint || "NONE";
+
+    if (
+      availableResults.length > 0 &&
+      currentFingerprint !== previousFingerprint &&
+      dryRun
+    ) {
       await log(
-        `PRUEBA: hay plazas en ${alerts.length} fecha(s); no se envía correo.`,
+        `PRUEBA: la disponibilidad ha cambiado en ${availableResults.length} fecha(s); no se envía correo.`,
       );
-    } else if (alerts.length > 0) {
-      await sendAvailabilityEmail(config, alerts);
+    } else if (
+      availableResults.length > 0 &&
+      currentFingerprint !== previousFingerprint
+    ) {
+      await sendAvailabilityEmail(config, availableResults);
       await writeGitHubOutput("alert_sent", "true");
       await log(
-        `ALERTA enviada a dos destinatarios para ${alerts.length} fecha(s).`,
+        `ALERTA enviada a dos destinatarios para ${availableResults.length} fecha(s).`,
       );
+    } else if (availableResults.length > 0) {
+      await log("La disponibilidad no ha cambiado; no se repite el correo.");
     }
 
+    state.lastAlertFingerprint = currentFingerprint;
+    await writeGitHubOutput("alert_fingerprint", currentFingerprint);
     await fs.writeFile(STATE_PATH, JSON.stringify(state, null, 2), "utf8");
   } finally {
     await browser.close();

@@ -40,11 +40,21 @@ jobs:
           ALERT_EMAIL_1: ${{ secrets.ALERT_EMAIL_1 }}
           ALERT_EMAIL_2: ${{ secrets.ALERT_EMAIL_2 }}
           RESEND_FROM: ${{ vars.RESEND_FROM }}
+          LAST_ALERT_FINGERPRINT: ${{ vars.LAST_ALERT_FINGERPRINT }}
           MONITOR_DATES: "2026-08-05,2026-08-06"
         run: npm run check
 
-      - name: Desactivar tras avisar o finalizar las fechas
-        if: ${{ steps.monitor.outputs.alert_sent == 'true' || steps.monitor.outputs.expired == 'true' }}
+      - name: Guardar la última disponibilidad comprobada
+        if: ${{ steps.monitor.outputs.alert_fingerprint != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh variable set LAST_ALERT_FINGERPRINT
+          --repo "$GITHUB_REPOSITORY"
+          --body "${{ steps.monitor.outputs.alert_fingerprint }}"
+
+      - name: Desactivar cuando hayan pasado las fechas
+        if: ${{ steps.monitor.outputs.expired == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow disable monitor-alsa.yml
