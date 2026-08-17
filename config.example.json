@@ -1,8 +1,14 @@
 {
   "dates": [
-    "2026-08-05",
-    "2026-08-06"
+    "2026-08-30",
+    "2026-08-31",
+    "2026-09-01"
   ],
+  "departureTimesByDate": {
+    "2026-09-01": [
+      "02:15"
+    ]
+  },
   "browserPath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
   "resend": {
     "apiKey": "re_CAMBIAR",
