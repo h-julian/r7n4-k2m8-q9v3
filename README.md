@@ -1,7 +1,13 @@
 # Monitor de plazas ALSA con GitHub Actions y Resend
 
-Comprueba cada cinco minutos los viajes de **Jerez de la Frontera a Zamora**
-para el 5 y el 6 de agosto de 2026. Si aparece una plaza:
+Comprueba cada cinco minutos los viajes de **Zamora a Jerez de la Frontera**
+seleccionados para la vuelta:
+
+- todos los servicios del domingo 30 de agosto de 2026;
+- todos los servicios del lunes 31 de agosto de 2026;
+- solo el servicio de las 02:15 del martes 1 de septiembre de 2026.
+
+Si aparece una plaza:
 
 1. vuelve a comprobarla para evitar falsos positivos;
 2. envía una única alerta mediante Resend a dos destinatarios;
@@ -38,7 +44,7 @@ Se introduce desde **Settings → Secrets and variables → Actions → Secrets*
 2. Sustituye `ALERT_EMAIL_1` y `ALERT_EMAIL_2`.
 3. Comprueba `RESEND_FROM`.
 4. Cambia `MONITOR_ENABLED` a `true`.
-5. En **Actions**, abre “Monitor ALSA Jerez-Zamora” y ejecuta
+5. En **Actions**, abre “Monitor ALSA Zamora-Jerez” y ejecuta
    **Run workflow** una vez para verificarlo inmediatamente.
 
 Después se ejecutará automáticamente cada cinco minutos.

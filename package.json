@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Monitor local de plazas ALSA para Jerez de la Frontera - Zamora",
+  "description": "Monitor de plazas ALSA para Zamora - Jerez de la Frontera",
   "scripts": {
     "check": "node alsa-monitor.mjs",
     "dry-run": "node alsa-monitor.mjs --dry-run",

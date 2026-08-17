@@ -4,7 +4,7 @@ $projectDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $scriptPath = Join-Path $projectDir "alsa-monitor.mjs"
 $configPath = Join-Path $projectDir "config.json"
 $nodePath = (Get-Command node -ErrorAction Stop).Source
-$taskName = "ALSA Jerez-Zamora monitor"
+$taskName = "ALSA Zamora-Jerez monitor"
 
 if (-not (Test-Path -LiteralPath $configPath)) {
     throw "Falta config.json. Copia y completa config.example.json."
@@ -36,7 +36,7 @@ Register-ScheduledTask `
     -Action $action `
     -Trigger $trigger `
     -Settings $settings `
-    -Description "Comprueba plazas ALSA Jerez-Zamora y avisa por correo." `
+    -Description "Comprueba plazas ALSA Zamora-Jerez y avisa por correo." `
     -Force | Out-Null
 
 Write-Host "Tarea instalada: $taskName"

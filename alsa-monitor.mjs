@@ -11,8 +11,10 @@ const STATE_PATH = process.env.MONITOR_STATE_PATH
   : path.join(PROJECT_DIR, ".alsa-monitor-state.json");
 const LOG_PATH = path.join(PROJECT_DIR, "alsa-monitor.log");
 const ALSA_HOME = "https://www.alsa.com/en";
-const ORIGIN_ID = "2374";
-const DESTINATION_ID = "333";
+const ORIGIN_ID = "333";
+const DESTINATION_ID = "2374";
+const ORIGIN_NAME = "Zamora";
+const DESTINATION_NAME = "Jerez de la Frontera";
 
 async function log(message) {
   const line = `${new Date().toISOString()} ${message}`;
@@ -39,6 +41,9 @@ function applyEnvironment(config) {
     dates: process.env.MONITOR_DATES
       ? process.env.MONITOR_DATES.split(",").map((value) => value.trim())
       : config.dates,
+    departureTimesByDate: process.env.MONITOR_DEPARTURE_FILTERS
+      ? JSON.parse(process.env.MONITOR_DEPARTURE_FILTERS)
+      : config.departureTimesByDate,
     browserPath: process.env.CHROME_PATH || config.browserPath,
     resend: {
       ...config.resend,
@@ -55,6 +60,24 @@ function applyEnvironment(config) {
 function validateConfig(config, { dryRun = false } = {}) {
   if (!Array.isArray(config.dates) || config.dates.length === 0) {
     throw new Error("config.json debe incluir al menos una fecha en dates.");
+  }
+  for (const [date, departures] of Object.entries(
+    config.departureTimesByDate ?? {},
+  )) {
+    if (!config.dates.includes(date)) {
+      throw new Error(
+        `La fecha filtrada ${date} debe estar incluida también en dates.`,
+      );
+    }
+    if (
+      !Array.isArray(departures) ||
+      departures.length === 0 ||
+      departures.some((value) => !/^\d{2}:\d{2}$/.test(value))
+    ) {
+      throw new Error(
+        `departureTimesByDate.${date} debe contener horas en formato HH:mm.`,
+      );
+    }
   }
   if (dryRun) return;
 
@@ -186,7 +209,7 @@ async function extractJourneys(page) {
   });
 }
 
-async function checkDate(page, action, isoDate) {
+async function checkDate(page, action, isoDate, departureTimes = null) {
   const searchUrl = buildSearchUrl(action, isoDate);
   await page.goto(searchUrl, {
     waitUntil: "domcontentloaded",
@@ -208,11 +231,22 @@ async function checkDate(page, action, isoDate) {
       `ALSA no devolvió tarjetas de viaje para ${isoDate}; se evita asumir disponibilidad.`,
     );
   }
+  const monitoredJourneys = departureTimes
+    ? result.journeys.filter((journey) =>
+        departureTimes.includes(journey.departure),
+      )
+    : result.journeys;
+  if (monitoredJourneys.length === 0) {
+    throw new Error(
+      `ALSA no devolvió los horarios vigilados (${departureTimes.join(", ")}) ` +
+        `para ${isoDate}; se evita asumir disponibilidad.`,
+    );
+  }
   return {
     date: isoDate,
     searchUrl,
-    journeys: result.journeys,
-    available: result.journeys.filter((journey) => !journey.soldOut),
+    journeys: monitoredJourneys,
+    available: monitoredJourneys.filter((journey) => !journey.soldOut),
   };
 }
 
@@ -296,14 +330,14 @@ async function sendAvailabilityEmail(config, results) {
   await sendWithResend(
     config,
     {
-      subject: "¡Hay plaza ALSA Jerez–Zamora!",
+      subject: "¡Hay plaza ALSA Zamora–Jerez!",
       text:
-        "ALSA muestra plaza disponible para Jerez de la Frontera → Zamora.\n\n" +
+        `ALSA muestra plaza disponible para ${ORIGIN_NAME} → ${DESTINATION_NAME}.\n\n` +
         textBlocks.join("\n\n") +
         "\n\nLa disponibilidad puede desaparecer rápidamente.",
       html:
         "<h2>¡Hay plaza en ALSA!</h2>" +
-        "<p>Jerez de la Frontera → Zamora</p>" +
+        `<p>${escapeHtml(ORIGIN_NAME)} → ${escapeHtml(DESTINATION_NAME)}</p>` +
         htmlBlocks.join("") +
         "<p><strong>La disponibilidad puede desaparecer rápidamente.</strong></p>",
     },
@@ -346,13 +380,14 @@ async function runMonitor(config, { dryRun = false } = {}) {
     const availableResults = [];
 
     for (const isoDate of activeDates) {
-      const result = await checkDate(page, action, isoDate);
+      const departureTimes = config.departureTimesByDate?.[isoDate] ?? null;
+      const result = await checkDate(page, action, isoDate, departureTimes);
       const firstFingerprint = fingerprint(result.available);
       let confirmed = result;
 
       if (result.available.length > 0) {
         await page.waitForTimeout(1_500);
-        confirmed = await checkDate(page, action, isoDate);
+        confirmed = await checkDate(page, action, isoDate, departureTimes);
       }
 
       const confirmedFingerprint = fingerprint(confirmed.available);
@@ -411,7 +446,10 @@ async function runMonitor(config, { dryRun = false } = {}) {
 
 try {
   const fileConfig = await readJson(CONFIG_PATH, {
-    dates: ["2026-08-05", "2026-08-06"],
+    dates: ["2026-08-30", "2026-08-31", "2026-09-01"],
+    departureTimesByDate: {
+      "2026-09-01": ["02:15"],
+    },
     resend: {},
   });
   const config = applyEnvironment(fileConfig);

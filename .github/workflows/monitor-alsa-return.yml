@@ -1,4 +1,4 @@
-name: Monitor ALSA Jerez-Zamora
+name: Monitor ALSA Zamora-Jerez
 
 on:
   workflow_dispatch:
@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: monitor-alsa-jerez-zamora
+  group: monitor-alsa-zamora-jerez
   cancel-in-progress: false
 
 jobs:
@@ -40,7 +40,8 @@ jobs:
           ALERT_EMAIL_1: ${{ secrets.ALERT_EMAIL_1 }}
           ALERT_EMAIL_2: ${{ secrets.ALERT_EMAIL_2 }}
           RESEND_FROM: ${{ vars.RESEND_FROM }}
-          MONITOR_DATES: "2026-08-05,2026-08-06"
+          MONITOR_DATES: "2026-08-30,2026-08-31,2026-09-01"
+          MONITOR_DEPARTURE_FILTERS: '{"2026-09-01":["02:15"]}'
           MONITOR_STATE_PATH: ".github/alsa-monitor-state.json"
         run: npm run check
 
@@ -59,4 +60,4 @@ jobs:
         if: ${{ steps.monitor.outputs.expired == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow disable monitor-alsa.yml
+        run: gh workflow disable monitor-alsa-return.yml
